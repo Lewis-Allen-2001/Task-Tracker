@@ -1,186 +1,218 @@
 document.addEventListener("DOMContentLoaded", function () {
   const taskInput = document.getElementById("taskInput");
+  const taskTimer = document.getElementById("taskTimer"); // New timer input
   const addTaskButton = document.getElementById("addTaskButton");
   const taskList = document.getElementById("taskList");
 
   // Load tasks from localStorage
   function loadTasks() {
     const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    tasks.forEach(function (task) {
-      createTaskElement(task.text, task.completed, task.subtasks);
+    tasks.forEach(({ text, completed, subtasks, timer, running }) => {
+      createTaskElement(text, completed, subtasks, timer, running);
     });
   }
 
   // Save tasks to localStorage
   function saveTasks() {
-    const tasks = [];
-    taskList.querySelectorAll(".task").forEach(function (taskItem) {
-      const taskContent = taskItem.querySelector(".task-header span");
-      const subtasks = [];
-      taskItem
-        .querySelectorAll(".subtask-item")
-        .forEach(function (subtaskItem) {
+    const tasks = Array.from(taskList.querySelectorAll(".task")).map(
+      (taskItem) => {
+        const taskContent = taskItem.querySelector(".task-header span");
+        const subtasks = Array.from(
+          taskItem.querySelectorAll(".subtask-item")
+        ).map((subtaskItem) => {
           const subtaskContent = subtaskItem.querySelector("span");
-          subtasks.push({
+          return {
             text: subtaskContent.textContent,
             completed: subtaskContent.classList.contains("completed"),
-          });
+          };
         });
-      tasks.push({
-        text: taskContent.textContent,
-        completed: taskContent.classList.contains("completed"),
-        subtasks: subtasks,
-      });
-    });
+        const timer = taskItem.querySelector(".task-timer").textContent;
+        const running = taskItem.classList.contains("running");
+        return {
+          text: taskContent.textContent,
+          completed: taskContent.classList.contains("completed"),
+          subtasks: subtasks,
+          timer: timer,
+          running: running,
+        };
+      }
+    );
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }
 
-  // Function to create a new task element
-  function createTaskElement(taskText, completed = false, subtasks = []) {
+  // Create a new task element
+  function createTaskElement(
+    taskText,
+    completed = false,
+    subtasks = [],
+    timer = "00:00",
+    running = false
+  ) {
     const taskItem = document.createElement("li");
-    taskItem.className = "task";
+    taskItem.className = `task ${running ? "running" : ""}`;
+    taskItem.innerHTML = `
+      <div class="task-header">
+        <span class="${completed ? "completed" : ""}">${taskText}</span>
+        <span class="task-timer">${timer}</span>
+        <button class="start-timer">Start</button>
+        <button class="stop-timer">Stop</button>
+        <button class="toggle-subtasks">▼</button>
+        <button class="add-subtask">Add Task</button>
+        <button class="delete-task" style="color: #ff0000; background: none; border: none; cursor: pointer;">Delete</button>
+      </div>
+      <ul class="subtask-list" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out;"></ul>
+    `;
 
-    const taskHeader = document.createElement("div");
-    taskHeader.className = "task-header";
+    const subtaskList = taskItem.querySelector(".subtask-list");
+    subtasks.forEach(({ text, completed }) =>
+      createSubtaskElement(text, taskItem, completed)
+    );
 
-    const taskContent = document.createElement("span");
-    taskContent.textContent = taskText;
-    if (completed) {
-      taskContent.classList.add("completed");
-    }
-
-    const toggleSubtaskButton = document.createElement("button");
-    toggleSubtaskButton.textContent = "▼"; // Toggle icon
-    toggleSubtaskButton.style.marginLeft = "10px";
-    toggleSubtaskButton.style.cursor = "pointer";
-
-    const addSubtaskButton = document.createElement("button");
-    addSubtaskButton.textContent = "Add Task";
-    addSubtaskButton.style.marginLeft = "10px";
-    addSubtaskButton.style.cursor = "pointer";
-
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.style.color = "#ff0000";
-    deleteButton.style.border = "none";
-    deleteButton.style.background = "none";
-    deleteButton.style.cursor = "pointer";
-
-    // Mark task as completed when clicked
-    taskContent.addEventListener("click", function () {
-      taskContent.classList.toggle("completed");
-      saveTasks(); // Save tasks to localStorage
-    });
-
-    // Delete task when delete button is clicked
-    deleteButton.addEventListener("click", function () {
-      taskList.removeChild(taskItem);
-      saveTasks(); // Save tasks to localStorage
-    });
-
-    // Function to toggle subtasks visibility
-    function toggleSubtasks() {
-      const subtaskList = taskItem.querySelector(".subtask-list");
-      if (subtaskList.style.display === "none") {
-        subtaskList.style.display = "block";
-        toggleSubtaskButton.textContent = "▲"; // Change icon
-      } else {
-        subtaskList.style.display = "none";
-        toggleSubtaskButton.textContent = "▼"; // Change icon
-      }
-    }
-
-    // Function to add a new subtask
-    function addSubtask() {
-      const subtaskText = prompt("Enter Task:");
-      if (subtaskText) {
-        createSubtaskElement(subtaskText, taskItem);
+    taskItem
+      .querySelector(".task-header span")
+      .addEventListener("click", function () {
+        this.classList.toggle("completed");
         saveTasks();
-      }
-    }
+      });
 
-    // Add subtask when button is clicked
-    addSubtaskButton.addEventListener("click", addSubtask);
+    taskItem
+      .querySelector(".delete-task")
+      .addEventListener("click", function () {
+        taskList.removeChild(taskItem);
+        saveTasks();
+      });
 
-    // Toggle subtasks when toggle button is clicked
-    toggleSubtaskButton.addEventListener("click", toggleSubtasks);
+    taskItem
+      .querySelector(".toggle-subtasks")
+      .addEventListener("click", function () {
+        const isExpanded = subtaskList.style.maxHeight;
+        subtaskList.style.maxHeight = isExpanded
+          ? null
+          : subtaskList.scrollHeight + "px";
+        subtaskList.style.padding = isExpanded ? "0" : "10px 0";
+        this.textContent = isExpanded ? "▼" : "▲";
+      });
 
-    taskHeader.appendChild(taskContent);
-    taskHeader.appendChild(toggleSubtaskButton);
-    taskHeader.appendChild(addSubtaskButton);
-    taskHeader.appendChild(deleteButton);
-    taskItem.appendChild(taskHeader);
+    taskItem
+      .querySelector(".add-subtask")
+      .addEventListener("click", function () {
+        const subtaskText = prompt("Enter Task:");
+        if (subtaskText) {
+          createSubtaskElement(subtaskText, taskItem);
+          saveTasks();
+        }
+      });
 
-    const subtaskList = document.createElement("ul");
-    subtaskList.className = "subtask-list";
+    taskItem
+      .querySelector(".start-timer")
+      .addEventListener("click", function () {
+        startTimer(taskItem);
+      });
 
-    // Load existing subtasks
-    subtasks.forEach(function (subtask) {
-      createSubtaskElement(subtask.text, taskItem, subtask.completed);
-    });
+    taskItem
+      .querySelector(".stop-timer")
+      .addEventListener("click", function () {
+        stopTimer(taskItem);
+      });
 
-    taskItem.appendChild(subtaskList);
     taskList.appendChild(taskItem);
+
+    if (running && timer !== "00:00") {
+      startTimer(taskItem, true);
+    }
   }
 
   // Function to create a new subtask element
   function createSubtaskElement(subtaskText, taskItem, completed = false) {
     const subtaskItem = document.createElement("li");
     subtaskItem.className = "subtask-item";
+    subtaskItem.innerHTML = `
+      <span class="${completed ? "completed" : ""}">${subtaskText}</span>
+      <button class="delete-subtask" style="color: #ff0000; background: none; border: none; cursor: pointer;">Delete</button>
+    `;
 
-    const subtaskContent = document.createElement("span");
-    subtaskContent.textContent = subtaskText;
-    if (completed) {
-      subtaskContent.classList.add("completed");
-    }
-
-    const deleteSubtaskButton = document.createElement("button");
-    deleteSubtaskButton.textContent = "Delete";
-    deleteSubtaskButton.style.color = "#ff0000";
-    deleteSubtaskButton.style.border = "none";
-    deleteSubtaskButton.style.background = "none";
-    deleteSubtaskButton.style.cursor = "pointer";
-
-    // Mark subtask as completed when clicked
-    subtaskContent.addEventListener("click", function () {
-      subtaskContent.classList.toggle("completed");
-      saveTasks(); // Save tasks to localStorage
+    subtaskItem.querySelector("span").addEventListener("click", function () {
+      this.classList.toggle("completed");
+      saveTasks();
     });
 
-    // Delete subtask when delete button is clicked
-    deleteSubtaskButton.addEventListener("click", function () {
-      taskItem.querySelector(".subtask-list").removeChild(subtaskItem);
-      saveTasks(); // Save tasks to localStorage
-    });
+    subtaskItem
+      .querySelector(".delete-subtask")
+      .addEventListener("click", function () {
+        subtaskItem.remove();
+        saveTasks();
+      });
 
-    subtaskItem.appendChild(subtaskContent);
-    subtaskItem.appendChild(deleteSubtaskButton);
     taskItem.querySelector(".subtask-list").appendChild(subtaskItem);
   }
 
-  // Function to add a new task
+  // Add a new task
   function addTask() {
     const taskText = taskInput.value.trim();
-    if (taskText === "") {
+    const timerValue = taskTimer.value.trim();
+
+    if (!taskText) {
       alert("Please enter a task.");
       return;
     }
 
-    createTaskElement(taskText);
-    saveTasks(); // Save tasks to localStorage
+    const timer = timerValue ? `${timerValue}:00` : "00:00";
+    createTaskElement(taskText, false, [], timer);
+
+    saveTasks();
     taskInput.value = ""; // Clear input field
+    taskTimer.value = ""; // Clear timer field
   }
 
-  // Add task when button is clicked
-  addTaskButton.addEventListener("click", addTask);
+  // Timer variables
+  let timers = {};
 
-  // Optionally, add task when Enter key is pressed
-  taskInput.addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
-      addTask();
+  // Start the timer countdown
+  function startTimer(taskItem, resume = false) {
+    const timerDisplay = taskItem.querySelector(".task-timer");
+    let [minutes, seconds] = timerDisplay.textContent.split(":").map(Number);
+    taskItem.classList.add("running");
+
+    if (resume && timers[taskItem]) {
+      return; // Timer is already running
     }
+
+    timers[taskItem] = setInterval(function () {
+      if (seconds === 0) {
+        if (minutes === 0) {
+          clearInterval(timers[taskItem]);
+          taskItem.querySelector(".task-header").style.backgroundColor =
+            "#ffcccc"; // Highlight task
+          return;
+        }
+        minutes--;
+        seconds = 59;
+      } else {
+        seconds--;
+      }
+
+      timerDisplay.textContent = `${minutes
+        .toString()
+        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }, 1000);
+
+    saveTasks();
+  }
+
+  // Stop the timer countdown
+  function stopTimer(taskItem) {
+    clearInterval(timers[taskItem]);
+    delete timers[taskItem];
+    taskItem.classList.remove("running");
+    saveTasks();
+  }
+
+  // Event listeners
+  addTaskButton.addEventListener("click", addTask);
+  taskInput.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") addTask();
   });
 
-  // Load tasks when the app is loaded
+  // Initial load of tasks
   loadTasks();
 });
