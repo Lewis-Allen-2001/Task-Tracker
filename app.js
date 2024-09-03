@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const taskTimer = document.getElementById("taskTimer"); // New timer input
   const addTaskButton = document.getElementById("addTaskButton");
   const taskList = document.getElementById("taskList");
+  const notificationSound = document.getElementById("notificationSound");
 
   // Load tasks from localStorage
   function loadTasks() {
@@ -181,8 +182,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (seconds === 0) {
         if (minutes === 0) {
           clearInterval(timers[taskItem]);
-          taskItem.querySelector(".task-header").style.backgroundColor =
-            "#ffcccc"; // Highlight task
+          delete timers[taskItem];
+          taskItem.classList.remove("running");
+          timerDisplay.textContent = "00:00";
+          showAlert("Time's up! You have earned yourself a break!");
           return;
         }
         minutes--;
@@ -205,6 +208,12 @@ document.addEventListener("DOMContentLoaded", function () {
     delete timers[taskItem];
     taskItem.classList.remove("running");
     saveTasks();
+  }
+
+  // Show alert and play sound
+  function showAlert(message) {
+    alert(message);
+    notificationSound.play();
   }
 
   // Event listeners

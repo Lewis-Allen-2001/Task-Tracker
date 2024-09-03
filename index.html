@@ -8,10 +8,11 @@
     <title>Task Tracker</title>
   </head>
   <body>
+    <audio id="notificationSound" src="assets/TimesUp.mp3" preload="auto"></audio>
     <div class="container">
         <h1>Task Tracker</h1>
         <input type="text" id="taskInput" placeholder="Enter a List Title">
-        <input type="number" id="taskTimer" placeholder="Set timer for each task (minutes)" min="1">
+        <input type="number" id="taskTimer" placeholder="Set timer (minutes)" min="1">
         <button id="addTaskButton">Create List</button>
         <ul id="taskList"></ul>
     </div>
