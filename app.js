@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
           delete timers[taskItem];
           taskItem.classList.remove("running");
           timerDisplay.textContent = "00:00";
-          showAlert("Time's up! You have earned yourself a break!");
+          timesUpMsg();
           return;
         }
         minutes--;
@@ -210,10 +210,19 @@ document.addEventListener("DOMContentLoaded", function () {
     saveTasks();
   }
 
-  // Show alert and play sound
-  function showAlert(message) {
-    alert(message);
+  // Show popup and play sound
+  function timesUpMsg() {
+    const popup = document.getElementById("timesUpMsg");
+    popup.style.display = "none";
     notificationSound.play();
+
+    setTimeout(() => {
+      popup.style.display = "block";
+    }, 1000);
+
+    setInterval(() => {
+      popup.style.display = "none";
+    }, 10000);
   }
 
   // Event listeners
