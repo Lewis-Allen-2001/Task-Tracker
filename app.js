@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(function () {
   const taskInput = document.getElementById("taskInput");
   const taskTimer = document.getElementById("taskTimer"); // New timer input
   const addTaskButton = document.getElementById("addTaskButton");
