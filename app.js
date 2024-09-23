@@ -1,11 +1,11 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function () {
   const taskInput = document.getElementById("taskInput");
   const taskTimer = document.getElementById("taskTimer"); 
   const addTaskButton = document.getElementById("addTaskButton");
   const taskList = document.getElementById("taskList");
   const notificationSound = document.getElementById("notificationSound");
 
-  // Load tasks from localStorage
+ 
   function loadTasks() {
     const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
     tasks.forEach(({ text, completed, subtasks, timer, running }) => {
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Save tasks to localStorage
+
   function saveTasks() {
     const tasks = Array.from(taskList.querySelectorAll(".task")).map(
       (taskItem) => {
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }
 
-  // Create a new task element
+
   function createTaskElement(
     taskText,
     completed = false,
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Function to create a new subtask element
+ 
   function createSubtaskElement(subtaskText, taskItem, completed = false) {
     const subtaskItem = document.createElement("li");
     subtaskItem.className = "subtask-item";
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
     taskItem.querySelector(".subtask-list").appendChild(subtaskItem);
   }
 
-  // Add a new task
+ 
   function addTask() {
     const taskText = taskInput.value.trim();
     const timerValue = taskTimer.value.trim();
@@ -161,11 +161,11 @@ document.addEventListener("DOMContentLoaded", function () {
     createTaskElement(taskText, false, [], timer);
 
     saveTasks();
-    taskInput.value = ""; // Clear input field
-    taskTimer.value = ""; // Clear timer field
+    taskInput.value = ""; 
+    taskTimer.value = ""; 
   }
 
-  // Timer variables
+  
   let timers = {};
 
   // Start the timer countdown
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
     saveTasks();
   }
 
-  // Stop the timer countdown
+
   function stopTimer(taskItem) {
     clearInterval(timers[taskItem]);
     delete timers[taskItem];
@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
     saveTasks();
   }
 
-  // Show popup and play sound
+ 
   function timesUpMsg() {
     const popup = document.getElementById("timesUpMsg");
     popup.style.display = "none";
@@ -225,12 +225,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 10000);
   }
 
-  // Event listeners
   addTaskButton.addEventListener("click", addTask);
   taskInput.addEventListener("keypress", function (event) {
     if (event.key === "Enter") addTask();
   });
 
-  // Initial load of tasks
+  
   loadTasks();
 });
