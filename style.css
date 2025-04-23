@@ -132,6 +132,7 @@ h1 {
   font-weight: bold;
   color: #333;
   margin-right: 10px;
+  padding: 0 5px;
 }
 
 .completed {
@@ -173,7 +174,7 @@ h1 {
 .subtask-item {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: 10px 0;
 }
 #timesUpMsg {
   display: none;
